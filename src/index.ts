@@ -1,4 +1,7 @@
-import { helloWorld } from './hello-world';
+import { createServer } from './server';
 
-const greet = helloWorld();
-console.log(greet);
+const PORT = Number(process.env.PORT) || 8000;
+
+createServer().listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});

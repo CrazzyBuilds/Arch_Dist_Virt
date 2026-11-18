@@ -53,4 +53,10 @@ export default [{
     plugins: {
         jest,
     },
+
+    rules: {
+        // Le serveur testé est sans état : le démarrer une fois pour toute
+        // la suite (beforeAll/afterAll) ne crée pas de dépendance entre tests.
+        "jest/no-hooks": "off",
+    },
 }];
