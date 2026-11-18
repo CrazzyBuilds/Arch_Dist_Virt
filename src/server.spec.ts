@@ -45,6 +45,6 @@ describe('http server', () => {
 
     const res = await fetch(`${baseUrl}/unknown`);
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(404);
   });
 });
