@@ -8,9 +8,11 @@ RUN addgroup -S node && adduser -S node -G node && chown node:node /app
 
 USER node
 
-COPY ./ ./
+COPY ./package*.json ./
 
 RUN npm ci
+
+COPY ./ ./
 
 RUN npm run build
 
