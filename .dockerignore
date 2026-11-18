@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+pacts
+.git
+*.pdf
+compte-rendu.md
