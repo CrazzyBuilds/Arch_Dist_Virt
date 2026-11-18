@@ -1,0 +1,55 @@
+name: CD
+
+# Se déclenche à la fin du workflow CI sur main
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+env:
+  DOCKERHUB_IMAGE: crazzybuilds/sysinfo-api
+  GHCR_IMAGE: ghcr.io/crazzybuilds/sysinfo-api
+  # Commit testé par la CI : c'est exactement celui-ci qu'on publie
+  COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+
+jobs:
+  publish:
+    # Uniquement si la CI a réussi
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    # Le GITHUB_TOKEN doit pouvoir publier sur GHCR
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Récupération du code testé par la CI
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+
+      - name: Connexion à Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: crazzybuilds
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Connexion à GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construction et publication de l'image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_IMAGE }}:latest
+            ${{ env.DOCKERHUB_IMAGE }}:${{ env.COMMIT_SHA }}
+            ${{ env.GHCR_IMAGE }}:latest
+            ${{ env.GHCR_IMAGE }}:${{ env.COMMIT_SHA }}
