@@ -53,3 +53,39 @@ jobs:
             ${{ env.DOCKERHUB_IMAGE }}:${{ env.COMMIT_SHA }}
             ${{ env.GHCR_IMAGE }}:latest
             ${{ env.GHCR_IMAGE }}:${{ env.COMMIT_SHA }}
+
+  deploy:
+    # Uniquement après une publication réussie de l'image
+    needs: publish
+    runs-on: ubuntu-latest
+
+    # id-token : permet de demander un jeton OIDC à GitHub pour Azure
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Connexion à Azure (OIDC, sans mot de passe)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Crée le conteneur s'il n'existe pas, sinon le met à jour.
+      # Le tag (hash du commit) change à chaque version : Azure redéploie.
+      - name: Déploiement sur Azure Container Instances
+        run: |
+          az container create \
+            --resource-group rg-sysinfo \
+            --name sysinfo-api \
+            --location francecentral \
+            --image docker.io/${{ env.DOCKERHUB_IMAGE }}:${{ env.COMMIT_SHA }} \
+            --os-type Linux \
+            --cpu 1 \
+            --memory 1.5 \
+            --ports 8000 \
+            --ip-address Public \
+            --dns-name-label sysinfo-crazzybuilds \
+            --query ipAddress.fqdn \
+            --output tsv
