@@ -27,6 +27,6 @@ export function createServer(): http.Server {
       return;
     }
 
-    sendJson(res, 404, { error: 'Not Found' });
+    sendJson(res, 404, { error: 'Not Found', path: req.url });
   });
 }
